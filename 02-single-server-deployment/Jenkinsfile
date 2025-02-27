@@ -25,20 +25,24 @@ pipeline {
 
         stage('Deploy to Prod') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'MY_SSH_KEY', usernameVariable: 'username')]) {
-                    sh '''
-                    scp -i $MY_SSH_KEY -o StrictHostKeyChecking=no myapp.zip  ${username}@${SERVER_IP}:/home/ec2-user/
-                    ssh -i $MY_SSH_KEY -o StrictHostKeyChecking=no ${username}@${SERVER_IP} << EOF
-                        unzip -o /home/ec2-user/myapp.zip -d /home/ec2-user/app/
-                        source app/venv/bin/activate
-                        cd /home/ec2-user/app/
-                        pip install -r requirements.txt
-                        sudo systemctl restart flaskapp.service
+                 withCredentials([usernamePassword(credentialsId: 'ssh-username-password', passwordVariable: 'SSH_PASSWORD', usernameVariable: 'username')]) {
+            sh '''
+            # Using sshpass for password authentication
+            sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${username}@${SERVER_IP}:/home/azureuser/
+
+            # SSH into the server with sshpass to run commands
+            sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no ${username}@${SERVER_IP} << EOF
+                unzip -o /home/azureuser/myapp.zip -d /home/username/app/
+                source /home/venv/bin/activate
+                cd /home/ec2-user/app/
+                pip install -r requirements.txt
+                sudo systemctl restart flaskapp.service
 EOF
-                    '''
-                }
-            }
+            '''
         }
+    }
+}
+
        
         
        
