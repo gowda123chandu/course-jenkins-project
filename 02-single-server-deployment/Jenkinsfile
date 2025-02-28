@@ -12,6 +12,9 @@ pipeline {
                 // Install dependencies in virtual environment
                 script {
                     sh """
+                    # Print the current working directory to verify location
+                    pwd
+                    # Install dependencies in the virtual environment
                     python3 -m venv venv
                     bash -c 'source venv/bin/activate && pip install -r requirements.txt'
                     """
@@ -56,8 +59,11 @@ pipeline {
                             # Unzip the application
                             unzip -o /home/\$USERNAME/myapp.zip -d /home/\$USERNAME/app/
 
-                            # Set up virtual environment and install dependencies
+                            # Print the current working directory to verify location
                             cd /home/\$USERNAME/app/
+                            pwd
+
+                            # Set up virtual environment and install dependencies
                             python3 -m venv venv
                             bash -c 'source venv/bin/activate && pip install -r requirements.txt'
 
