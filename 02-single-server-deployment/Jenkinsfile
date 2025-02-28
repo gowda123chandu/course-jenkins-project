@@ -11,6 +11,7 @@ pipeline {
             steps {
                 // Set up the virtual environment and install requirements on the Jenkins agent (local machine)
                 sh """
+                ls -l 
                 python3 -m venv venv
                 bash -c 'source venv/bin/activate && pip install -r requirements.txt'
                 """
