@@ -4,8 +4,8 @@ pipeline {
     environment {
         SERVER_IP = credentials('prod-server-ip')
         PASSWORD = credentials('password')
-
     }
+
     stages {
         stage('Setup') {
             steps {
@@ -24,7 +24,7 @@ pipeline {
                 sh "ls -lart"
             }
         }
-        
+
         stage('Deploy to Prod') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'prod-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
@@ -46,15 +46,11 @@ pipeline {
 
                             # Restart the service
                             sudo systemctl restart flaskapp.service
-
-        
-EOF
-                    '''
+                        EOF
+                        '''
+                    }
                 }
             }
         }
-       
-        
-       
-        
-    
+    }
+}
