@@ -12,8 +12,10 @@ pipeline {
                 // Install dependencies in virtual environment
                 script {
                     sh """
-                    # Print the current working directory to verify location
+                    # Print the current working directory
                     pwd
+                    # List files in the directory to check if requirements.txt is there
+                    ls -l
                     # Install dependencies in the virtual environment
                     python3 -m venv venv
                     bash -c 'source venv/bin/activate && pip install -r requirements.txt'
@@ -38,7 +40,11 @@ pipeline {
                 // Create a zip of the project excluding the .git directory
                 script {
                     sh """
+                    # List files to check if requirements.txt exists before zipping
+                    ls -l
                     zip -r myapp.zip ./* -x '*.git*'
+                    # Verify if requirements.txt is in the zip file
+                    unzip -l myapp.zip
                     ls -lart
                     """
                 }
@@ -62,6 +68,9 @@ pipeline {
                             # Print the current working directory to verify location
                             cd /home/\$USERNAME/app/
                             pwd
+
+                            # List files in the directory to check if requirements.txt is there
+                            ls -l
 
                             # Set up virtual environment and install dependencies
                             python3 -m venv venv
