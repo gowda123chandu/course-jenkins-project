@@ -2,56 +2,29 @@ pipeline {
     agent any
 
     environment {
-        SERVER_IP = credentials('prod-vm-ip')  
-        PASSWORD = credentials('password')  
+        SERVER_IP = credentials('prod-server-ip')
+        PASSWORD = credentials('password')
+
     }
-
     stages {
-        stage('Checkout') {
+        stage('Setup') {
             steps {
-                // Checkout the Git repository to ensure requirements.txt is available
-                checkout scm
-
-                // Debugging step to list the contents of the repository and check if requirements.txt exists
-                sh 'ls -lart'
+                sh "pip install -r requirements.txt"
             }
         }
-
-        stage('Setup Virtual Environment') {
-            steps {
-                script {
-                    // Ensure that we create and activate a virtual environment before installing dependencies
-                    sh '''
-                    python3 -m venv venv
-                    bash -c "source venv/bin/activate && ls -lart && pip install -r requirements.txt"
-                    '''
-                }
-            }
-        }
-
         stage('Test') {
             steps {
-                // Run tests (you may adjust this as per your test framework)
-                script {
-                    sh '''
-                    bash -c "source venv/bin/activate && pytest"
-                    '''
-                }
+                sh "pytest"
             }
         }
 
-        stage('Package Code') {
+        stage('Package code') {
             steps {
-                // Create a zip of the project excluding the .git directory
-                script {
-                    sh '''
-                    zip -r myapp.zip ./* -x '*.git*'
-                    ls -lart
-                    '''
-                }
+                sh "zip -r myapp.zip ./* -x '*.git*'"
+                sh "ls -lart"
             }
         }
-
+        
         stage('Deploy to Prod') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'prod-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
@@ -73,11 +46,16 @@ pipeline {
 
                             # Restart the service
                             sudo systemctl restart flaskapp.service
-                        EOF
-                        '''
-                    }
+
+        
+EOF
+                    '''
                 }
             }
         }
+       
+        
+       
+        
     }
 }
