@@ -13,7 +13,7 @@ pipeline {
                 sh """
                 ls -l 
                 sudo python3 -m venv venv
-                bash -c 'source venv/bin/activate && sudo pip install -r 02-single-server-deployment/requirements.txt'
+                sudo bash -c 'source venv/bin/activate && sudo pip install -r 02-single-server-deployment/requirements.txt'
                 """
             }
         }
