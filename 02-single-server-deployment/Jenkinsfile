@@ -7,19 +7,22 @@ pipeline {
     }
 
     stages {
-        stage('Setup') {
+        stage('Checkout') {
             steps {
-                // Install dependencies in virtual environment
+                // Ensure you checkout the Git repository to get the requirements.txt file
+                checkout scm
+            }
+        }
+
+        stage('Setup Virtual Environment') {
+            steps {
                 script {
-                    sh """
-                    # Print the current working directory
-                    pwd
-                    # List files in the directory to check if requirements.txt is there
-                    ls -l
-                    # Install dependencies in the virtual environment
+                    // Ensure that we create and activate a virtual environment before installing dependencies
+                    sh '''
                     python3 -m venv venv
-                    bash -c 'source venv/bin/activate && pip install -r requirements.txt'
-                    """
+                    source venv/bin/activate
+                    pip install -r requirements.txt
+                    '''
                 }
             }
         }
@@ -28,9 +31,10 @@ pipeline {
             steps {
                 // Run tests (you may adjust this as per your test framework)
                 script {
-                    sh """
-                    bash -c 'source venv/bin/activate && pytest'
-                    """
+                    sh '''
+                    source venv/bin/activate
+                    pytest
+                    '''
                 }
             }
         }
@@ -39,14 +43,10 @@ pipeline {
             steps {
                 // Create a zip of the project excluding the .git directory
                 script {
-                    sh """
-                    # List files to check if requirements.txt exists before zipping
-                    ls -l
+                    sh '''
                     zip -r myapp.zip ./* -x '*.git*'
-                    # Verify if requirements.txt is in the zip file
-                    unzip -l myapp.zip
                     ls -lart
-                    """
+                    '''
                 }
             }
         }
@@ -56,30 +56,25 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'prod-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     script {
                         // Use sshpass to connect via password authentication
-                        sh """
+                        sh '''
                         # Copy the app.zip file to the remote server
-                        sshpass -p \$PASSWORD scp -o StrictHostKeyChecking=no myapp.zip \$USERNAME@\$SERVER_IP:/home/\$USERNAME/
+                        sshpass -p $PASSWORD scp -o StrictHostKeyChecking=no myapp.zip $USERNAME@$SERVER_IP:/home/$USERNAME/
 
                         # SSH into the server and deploy the app
-                        sshpass -p \$PASSWORD ssh -o StrictHostKeyChecking=no \$USERNAME@\$SERVER_IP << EOF
+                        sshpass -p $PASSWORD ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER_IP << EOF
                             # Unzip the application
-                            unzip -o /home/\$USERNAME/myapp.zip -d /home/\$USERNAME/app/
-
-                            # Print the current working directory to verify location
-                            cd /home/\$USERNAME/app/
-                            pwd
-
-                            # List files in the directory to check if requirements.txt is there
-                            ls -l
+                            unzip -o /home/$USERNAME/myapp.zip -d /home/$USERNAME/app/
 
                             # Set up virtual environment and install dependencies
+                            cd /home/$USERNAME/app/
                             python3 -m venv venv
-                            bash -c 'source venv/bin/activate && pip install -r requirements.txt'
+                            source venv/bin/activate
+                            pip install -r requirements.txt
 
                             # Restart the service
                             sudo systemctl restart flaskapp.service
                         EOF
-                        """
+                        '''
                     }
                 }
             }
