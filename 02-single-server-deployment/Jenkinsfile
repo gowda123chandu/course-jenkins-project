@@ -9,8 +9,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Ensure you checkout the Git repository to get the requirements.txt file
+                // Checkout the Git repository to ensure requirements.txt is available
                 checkout scm
+
+                // Debugging step to list the contents of the repository and check if requirements.txt exists
+                sh 'ls -lart'
             }
         }
 
@@ -20,7 +23,7 @@ pipeline {
                     // Ensure that we create and activate a virtual environment before installing dependencies
                     sh '''
                     python3 -m venv venv
-                    bash -c "source venv/bin/activate && pip install -r requirements.txt"
+                    bash -c "source venv/bin/activate && ls -lart && pip install -r requirements.txt"
                     '''
                 }
             }
@@ -66,7 +69,7 @@ pipeline {
                             # Set up virtual environment and install dependencies
                             cd /home/$USERNAME/app/
                             python3 -m venv venv
-                            bash -c "source venv/bin/activate && pip install -r requirements.txt"
+                            bash -c "source venv/bin/activate && ls -lart && pip install -r requirements.txt"
 
                             # Restart the service
                             sudo systemctl restart flaskapp.service
