@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        SERVER_IP = '52.172.157.148'
-        SHELL = '/bin/bash'  
+        SERVER_IP = '52.172.157.148' 
     }
     stages {
         stage('Deploy to Prod') {
@@ -10,10 +9,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'password', passwordVariable: 'password', usernameVariable: 'SSH_USER')]) {
                     sh '''
                     # Copy the app to the server
-                    sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${SSH_USER}@${52.172.157.148}:/home/azureuser/
+                    sshpass -p ${SSH_PASSWORD} scp -o StrictHostKeyChecking=no myapp.zip ${SSH_USER}@${SERVER_IP}:/home/azureuser/
                     
                     # SSH into the server and deploy
-                    sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no ${SSH_USER}@${52.172.157.148} << EOF
+                    sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SERVER_IP} << EOF
                         # Unzip the app
                         unzip -o /home/azureuser/myapp.zip -d /home/azureuser/app/
 
