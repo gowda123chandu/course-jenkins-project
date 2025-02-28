@@ -39,7 +39,7 @@ pipeline {
 
         stage('Deploy to Prod') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'prod-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: 'password', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     script {
                         // Use sshpass to connect via password authentication
                         sh '''
