@@ -9,19 +9,32 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
-                sh "pip install -r requirements.txt"
+                // Set up the virtual environment and install requirements on the Jenkins agent (local machine)
+                sh """
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install -r requirements.txt
+                """
             }
         }
+
         stage('Test') {
             steps {
-                sh "pytest"
+                // Run tests (you may adjust this as per your test framework)
+                sh """
+                source venv/bin/activate
+                pytest
+                """
             }
         }
 
         stage('Package code') {
             steps {
-                sh "zip -r myapp.zip ./* -x '*.git*'"
-                sh "ls -lart"
+                // Create a zip of the project excluding the .git directory
+                sh """
+                zip -r myapp.zip ./* -x '*.git*'
+                ls -lart
+                """
             }
         }
 
@@ -42,7 +55,8 @@ pipeline {
                             # Set up virtual environment and install dependencies
                             cd /home/$USERNAME/app/
                             python3 -m venv venv
-                            bash -c "source venv/bin/activate && ls -lart && pip install -r requirements.txt"
+                            source venv/bin/activate
+                            pip install -r requirements.txt
 
                             # Restart the service
                             sudo systemctl restart flaskapp.service
