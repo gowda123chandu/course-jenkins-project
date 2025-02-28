@@ -11,7 +11,7 @@ pipeline {
             steps {
                 // Set up the virtual environment and install requirements on the Jenkins agent (local machine)
                 sh """
-                pip3 install -r 02-single-server-deployment/requirements.txt  --break-system-packages
+                pip3 install --user -r 02-single-server-deployment/requirements.txt  --break-system-packages
                 """
             }
         }
