@@ -1,7 +1,8 @@
 pipeline {
     agent any
     environment {
-        SERVER_IP = '52.172.157.148'  // Set your server IP here
+        SERVER_IP = '52.172.157.148'
+        SHELL = '/bin/bash'  
     }
     stages {
         stage('Deploy to Prod') {
