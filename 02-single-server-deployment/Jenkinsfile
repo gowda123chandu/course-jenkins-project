@@ -1,51 +1,37 @@
 pipeline {
     agent any
-
     environment {
-        SERVER_IP = credentials('prod-vm-ip')
+        SERVER_IP = '52.172.157.148'  // Set your server IP here
     }
     stages {
-        stage('Setup') {
-            steps {
-                sh "pip install -r requirements.txt"
-            }
-        }
-        stage('Test') {
-            steps {
-                sh "pytest"
-            }
-        }
-
-        stage('Package code') {
-            steps {
-                sh "zip -r myapp.zip ./* -x '*.git*'"
-                sh "ls -lart"
-            }
-        }
-
         stage('Deploy to Prod') {
             steps {
-                 withCredentials([usernamePassword(credentialsId: 'ssh-username-password', passwordVariable: 'SSH_PASSWORD', usernameVariable: 'username')]) {
-            sh '''
-            # Using sshpass for password authentication
-            sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${username}@${SERVER_IP}:/home/azureuser/
+                withCredentials([usernamePassword(credentialsId: 'ssh-username-password', passwordVariable: 'SSH_PASSWORD', usernameVariable: 'SSH_USER')]) {
+                    sh '''
+                    # Copy the app to the server
+                    sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${SSH_USER}@${SERVER_IP}:/home/azureuser/
+                    
+                    # SSH into the server and deploy
+                    sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no ${SSH_USER}@${52.172.157.148} << EOF
+                        # Unzip the app
+                        unzip -o /home/azureuser/myapp.zip -d /home/azureuser/app/
 
-            # SSH into the server with sshpass to run commands
-            sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no ${username}@${SERVER_IP} << EOF
-                unzip -o /home/azureuser/myapp.zip -d /home/username/app/
-                source /home/venv/bin/activate
-                cd /home/ec2-user/app/
-                pip install -r requirements.txt
-                sudo systemctl restart flaskapp.service
+                        # Install python3-venv if not already installed
+                        sudo apt-get install python3-venv
+
+                        # Create and activate the virtual environment
+                        python3 -m venv /home/azureuser/app/venv
+                        source /home/ec2-user/app/venv/bin/activate
+
+                        # Install dependencies
+                        pip install -r /home/azureuser/app/requirements.txt
+
+                        # Restart the flask app
+                        sudo systemctl restart flaskapp.service
 EOF
-            '''
+                    '''
+                }
+            }
         }
-    }
-}
-
-       
-        
-       
-        
     }
 }
