@@ -2,47 +2,73 @@ pipeline {
     agent any
 
     environment {
-        SERVER_IP = credentials('prod-vm-ip')
+        SERVER_IP = credentials('prod-vm-ip')  
+        PASSWORD = credentials('password')  
     }
 
     stages {
         stage('Setup') {
             steps {
-                sh "pip install -r requirements.txt"
+                // Install dependencies in virtual environment
+                script {
+                    sh """
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install -r requirements.txt
+                    """
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh "pytest"
+                // Run tests (you may adjust this as per your test framework)
+                script {
+                    sh """
+                    source venv/bin/activate
+                    pytest
+                    """
+                }
             }
         }
 
-        stage('Package code') {
+        stage('Package Code') {
             steps {
-                sh "zip -r myapp.zip ./* -x '*.git*'"
-                sh "ls -lart"
+                // Create a zip of the project excluding the .git directory
+                script {
+                    sh """
+                    zip -r myapp.zip ./* -x '*.git*'
+                    ls -lart
+                    """
+                }
             }
         }
 
         stage('Deploy to Prod') {
             steps {
-                // Use usernamePassword credentials type instead of sshUserPrivateKey
-                withCredentials([usernamePassword(credentialsId: 'your-credentials-id', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    sh '''
-                    # Ensure sshpass is installed on the server you're deploying to
-                    # SCP the zipped application to the server
-                    sshpass -p $PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${USERNAME}@${SERVER_IP}:/home/azureuser/
+                withCredentials([usernamePassword(credentialsId: 'prod-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    script {
+                        // Use sshpass to connect via password authentication
+                        sh """
+                        # Copy the app.zip file to the remote server
+                        sshpass -p \$PASSWORD scp -o StrictHostKeyChecking=no myapp.zip \$USERNAME@\$SERVER_IP:/home/\$azureuser/
 
-                    # SSH into the server, unzip, install requirements and restart the service
-                    sshpass -p $PASSWORD ssh -o StrictHostKeyChecking=no ${USERNAME}@${SERVER_IP} << EOF
-                        unzip -o /home/azureuser/myapp.zip -d /home/azureuser/app/
-                        source /home/azureuser/app/venv/bin/activate
-                        cd /home/azureuser/app/
-                        pip install -r requirements.txt
-                        sudo systemctl restart flaskapp.service
-EOF
-                    '''
+                        # SSH into the server and deploy the app
+                        sshpass -p \$PASSWORD ssh -o StrictHostKeyChecking=no \$USERNAME@\$SERVER_IP << EOF
+                            # Unzip the application
+                            unzip -o /home/\$USERNAME/myapp.zip -d /home/\$azureuser/app/
+
+                            # Set up virtual environment and install dependencies
+                            cd /home/\$azureuser/app/
+                            python3 -m venv venv
+                            source venv/bin/activate
+                            pip install -r requirements.txt
+
+                            # Restart the service
+                            sudo systemctl restart flaskapp.service
+                        EOF
+                        """
+                    }
                 }
             }
         }
