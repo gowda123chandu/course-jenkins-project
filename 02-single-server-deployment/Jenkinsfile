@@ -6,10 +6,10 @@ pipeline {
     stages {
         stage('Deploy to Prod') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'ssh-username-password', passwordVariable: 'SSH_PASSWORD', usernameVariable: 'SSH_USER')]) {
+                withCredentials([usernamePassword(credentialsId: 'password', passwordVariable: 'password', usernameVariable: 'SSH_USER')]) {
                     sh '''
                     # Copy the app to the server
-                    sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${SSH_USER}@${SERVER_IP}:/home/azureuser/
+                    sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${SSH_USER}@${52.172.157.148}:/home/azureuser/
                     
                     # SSH into the server and deploy
                     sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no ${SSH_USER}@${52.172.157.148} << EOF
