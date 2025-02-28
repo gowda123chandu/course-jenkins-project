@@ -4,12 +4,14 @@ pipeline {
     environment {
         SERVER_IP = credentials('prod-vm-ip')
     }
+
     stages {
         stage('Setup') {
             steps {
                 sh "pip install -r requirements.txt"
             }
         }
+
         stage('Test') {
             steps {
                 sh "pytest"
@@ -25,12 +27,17 @@ pipeline {
 
         stage('Deploy to Prod') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'password', passwordVariable: 'password', usernameVariable: 'password')]) {
+                // Use usernamePassword credentials type instead of sshUserPrivateKey
+                withCredentials([usernamePassword(credentialsId: 'your-credentials-id', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     sh '''
-                    sshpass -p $PASSWORD -o StrictHostKeyChecking=no myapp.zip  ${username}@${SERVER_IP}:/home/azureuser/
-                    sshpass -p $PASSWORD -o StrictHostKeyChecking=no ${username}@${SERVER_IP} << EOF
-                        unzip -o /home/azureuser/myapp.zip -d /home/ec2-user/app/
-                        source app/venv/bin/activate
+                    # Ensure sshpass is installed on the server you're deploying to
+                    # SCP the zipped application to the server
+                    sshpass -p $PASSWORD scp -o StrictHostKeyChecking=no myapp.zip ${USERNAME}@${SERVER_IP}:/home/azureuser/
+
+                    # SSH into the server, unzip, install requirements and restart the service
+                    sshpass -p $PASSWORD ssh -o StrictHostKeyChecking=no ${USERNAME}@${SERVER_IP} << EOF
+                        unzip -o /home/azureuser/myapp.zip -d /home/azureuser/app/
+                        source /home/azureuser/app/venv/bin/activate
                         cd /home/azureuser/app/
                         pip install -r requirements.txt
                         sudo systemctl restart flaskapp.service
@@ -39,9 +46,5 @@ EOF
                 }
             }
         }
-       
-        
-       
-        
     }
 }
