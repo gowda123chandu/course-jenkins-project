@@ -13,8 +13,8 @@ pipeline {
                 sh """
                 ls -l 
                 python3 -m venv venv
-                bash -c 'source venv/bin/activate 
-                pip3 install -r 02-single-server-deployment/requirements.txt'
+                bash -c 'source ./venv/bin/activate' 
+                pip3 install -r 02-single-server-deployment/requirements.txt
                 """
             }
         }
@@ -23,7 +23,8 @@ pipeline {
             steps {
                 // Run tests (you may adjust this as per your test framework)
                 sh """
-                bash -c 'source venv/bin/activate && pytest'
+                bash -c 'source venv/bin/activate'
+                pytest
                 """
             }
         }
